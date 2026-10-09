@@ -1,0 +1,94 @@
+56c56,61
+< def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False, gap_limit=None, cp_max_s=None):
+---
+> def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False, gap_limit=None, cp_max_s=None, occupancy=False):
+>     """occupancy (2026-10-07, no-park configuration): vertex occupancy and explicit parking. Every node occupies its location from
+>     arrival to departure, the start vertex is occupied from 0 to the first departure, and each robot ends with a park choice (stay at its
+>     last location, its own start vertex, or any service location) that occupies the chosen vertex to the horizon; every vertex is a
+>     NoOverlap resource (the task planner's vertex_free). Parking arrival is part of the makespan; park moves are emitted as 'park'
+>     actions (goal >= G means the start vertex of robot goal-G)."""
+166a172,188
+>     occ = {}; park = {}
+>     if occupancy:
+>         for n, a in enumerate(nodes):
+>             a['arr'] = m.new_int_var(0, H, f'arr{n}'); a['dep'] = m.new_int_var(0, H, f'dep{n}')
+>             pres = a['present']
+>             if a['kind'] == 'service':
+>                 m.add(a['arr'] <= a['s']); m.add(a['dep'] >= a['e'])
+>             else:
+>                 m.add(a['arr'] <= a['s']).only_enforce_if(pres); m.add(a['dep'] >= a['e']).only_enforce_if(pres)
+>             size = m.new_int_var(0, H, ''); m.add(size == a['dep'] - a['arr'])
+>             if isinstance(a['loc'], int):
+>                 occ.setdefault(a['loc'], []).append(m.new_interval_var(a['arr'], size, a['dep'], f'occ{n}') if a['kind'] == 'service' else m.new_optional_interval_var(a['arr'], size, a['dep'], pres, f'occ{n}'))
+>             else:
+>                 for v in range(G):
+>                     at_v = m.new_bool_var(f'node{n}_at{v}'); m.add(a['loc'] == v).only_enforce_if(at_v); m.add(a['loc'] != v).only_enforce_if(at_v.Not())
+>                     lit = m.new_bool_var(''); m.add_bool_and([pres, at_v]).only_enforce_if(lit); m.add_bool_or([pres.Not(), at_v.Not()]).only_enforce_if(lit.Not())
+>                     occ.setdefault(v, []).append(m.new_optional_interval_var(a['arr'], size, a['dep'], lit, f'occ{n}_{v}'))
+171a194,197
+>         if occupancy:
+>             dep0 = m.new_int_var(0, H, f'dep0_{r}'); occ.setdefault(G + r, []).append(m.new_interval_var(0, dep0, dep0, f'start_occ{r}'))
+>             m.add(dep0 == H).only_enforce_if(idle)
+>             arr_park = m.new_int_var(0, H, f'arr_park{r}'); park[r] = {'dep0': dep0, 'arr_park': arr_park, 'choices': []}
+192a219,236
+>             if occupancy:
+>                 m.add(a['arr'] >= dep0 + initial).only_enforce_if(first)
+>                 # park choices after this node when it is the robot's last one
+>                 chs = []
+>                 cand = [(v, dist[loc][v] if isinstance(loc, int) else None) for v in range(G)] + [(G + r, startdist[r][loc] if isinstance(loc, int) else None)]
+>                 for v, tr in cand:
+>                     if tr is None:
+>                         continue
+>                     c = m.new_bool_var(f'r{r}_park{n}_{v}'); chs.append(c); park[r]['choices'].append((c, n, v, tr))
+>                     m.add(arr_park >= a['dep'] + tr).only_enforce_if(c)
+>                     if v == loc:
+>                         m.add(arr_park == a['dep']).only_enforce_if(c)
+>                     sz = m.new_int_var(0, H, ''); m.add(sz == H - arr_park)
+>                     occ.setdefault(v, []).append(m.new_optional_interval_var(arr_park, sz, H, c, f'park{r}_{n}_{v}'))
+>                 if chs:
+>                     m.add(sum(chs) == 1).only_enforce_if(last); m.add(sum(chs) == 0).only_enforce_if(last.Not())
+>                 else:
+>                     m.add(last == 0)
+204a249,250
+>                 if occupancy:
+>                     m.add(nodes[q]['arr'] >= nodes[n]['dep'] + travel(n, q)).only_enforce_if(arc)
+218a265,268
+>     if occupancy:
+>         for v, ivs in occ.items():
+>             if len(ivs) > 1:
+>                 m.add_no_overlap(ivs)
+220c270
+<     m.add_max_equality(end, [a['e'] for a in nodes])
+---
+>     m.add_max_equality(end, [a['e'] for a in nodes] + ([p['arr_park'] for p in park.values()] if occupancy else []))
+286a337,346
+>         if occupancy:
+>             result['parking'] = []
+>             for r, p in park.items():
+>                 ch = [(n, v, tr) for c, n, v, tr in p['choices'] if solver.value(c)]
+>                 if len(ch) == 1:
+>                     n, v, tr = ch[0]; t_arr = solver.value(p['arr_park']); t_dep = solver.value(nodes[n]['dep'])
+>                     result['parking'].append(dict(robot=r, after_node=n, vertex=v, stay=(v == nodes[n]['loc']), depart=t_dep, arrive=t_arr))
+>                     if v != nodes[n]['loc']:
+>                         actions.append(dict(node=-1, kind='park', task=None, robot=r, goal=v, start=t_dep, end=t_arr))
+>             result['occupancy'] = {'vertices': len(occ), 'intervals': sum(len(x) for x in occ.values())}
+316a377,378
+>         elif a['kind'] == 'park':
+>             pass
+323a386,395
+>             if a['kind'] == 'park':
+>                 G_ = len(locations); dest = robots[a['goal']-G_]['start'] if a['goal'] >= G_ else locations[a['goal']]['position']
+>                 if 'travel_ticks' in instance and previous_location is not None:
+>                     need = instance['start_travel_ticks'][a['goal']-G_][previous_location] if a['goal'] >= G_ else instance['travel_ticks'][previous_location][a['goal']]
+>                 else:
+>                     need = ticks(math.dist(pos, dest)/instance['speed'])
+>                 if a['end'] < end + need - 1:
+>                     errors.append(f'Robot {r} park travel shortage')
+>                 pos, end = dest, a['end']
+>                 continue
+343,344c415,416
+<     events = [(a['start'], 1, idx, a) for idx, a in enumerate(actions)]
+<     events += [(a['end'], 0, idx, a) for idx, a in enumerate(actions)]
+---
+>     events = [(a['start'], 1, idx, a) for idx, a in enumerate(actions) if a['kind'] != 'park']
+>     events += [(a['end'], 0, idx, a) for idx, a in enumerate(actions) if a['kind'] != 'park']

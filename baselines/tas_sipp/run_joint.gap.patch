@@ -1,0 +1,15 @@
+168c168
+<     save(out/'provenance.json',dict(input=str(args.input),input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),prm_seed=args.prm_seed,cp_seed=args.cp_seed,affinity=sorted(os.sched_getaffinity(0)),workers=4,budget=args.budget,base_s=5,mission=args.mission,stack_root=str(stack),source_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths},motion_policy='native SIPP retiming, fixed action order, one attempt',model_scope='service-waypoint transfers; no carrier-only relay'))
+---
+>     save(out/'provenance.json',dict(input=str(args.input),input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),prm_seed=args.prm_seed,cp_seed=args.cp_seed,affinity=sorted(os.sched_getaffinity(0)),workers=4,budget=args.budget,base_s=5,gap_limit=args.gap,cp_max_s=args.cp_max_s,mission=args.mission,stack_root=str(stack),source_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths},motion_policy='native SIPP retiming, fixed action order, one attempt',model_scope='service-waypoint transfers; no carrier-only relay'))
+170c170
+<     schedule=solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,first_after_base=True)
+---
+>     schedule=(solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,gap_limit=args.gap,cp_max_s=args.cp_max_s) if args.gap is not None else solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,first_after_base=True))
+213a214,215
+>     p.add_argument('--gap',type=float,default=None,help='relative gap limit for early CP-SAT stop (gap policy)')
+>     p.add_argument('--cp-max-s',type=float,default=None,help='CP-SAT time cap under the gap policy')
+230c232
+<     command=[sys.executable,str(Path(__file__).resolve()),'--worker','--input',str(args.input),'--output',str(args.output),'--stack-root',str(args.stack_root),'--mission',args.mission,'--budget',str(args.budget),'--prm-seed',str(args.prm_seed),'--cp-seed',str(args.cp_seed),'--cores',cores]
+---
+>     command=[sys.executable,str(Path(__file__).resolve()),'--worker','--input',str(args.input),'--output',str(args.output),'--stack-root',str(args.stack_root),'--mission',args.mission,'--budget',str(args.budget),'--prm-seed',str(args.prm_seed),'--cp-seed',str(args.cp_seed),'--cores',cores]+(['--gap',str(args.gap),'--cp-max-s',str(args.cp_max_s)] if args.gap is not None else [])

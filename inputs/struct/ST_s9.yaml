@@ -1,0 +1,78 @@
+robots:
+  num_of_robot: 4
+  robot:
+    robot0000:
+      state: [-3.35, -1.09, 90, 0, 0]
+      robot_radius: 0.3
+      service: taska
+      action_cost: [1.0]
+      ctr_parameter: [4.0, 0.0, 90.0, 2.5, 90.0]
+      dwa_parameter: [0.1, 2.0, 2.0, 10.0, 1.0]
+    robot0001:
+      state: [1.06, -3.43, 90, 0, 0]
+      robot_radius: 0.3
+      service: taskb
+      action_cost: [1.0]
+      ctr_parameter: [4.0, 0.0, 90.0, 2.5, 90.0]
+      dwa_parameter: [0.1, 2.0, 2.5, 10.0, 0.8]
+    robot0002:
+      state: [-1.58, 4.41, 90, 0, 0]
+      robot_radius: 0.3
+      service: taskc
+      action_cost: [1.0]
+      ctr_parameter: [4.0, 0.0, 90.0, 2.5, 90.0]
+      dwa_parameter: [0.1, 2.0, 2.5, 10.0, 0.8]
+    robot0003:
+      state: [4.5, 1.71, 90, 0, 0]
+      robot_radius: 0.3
+      service: taskd
+      action_cost: [1.0]
+      ctr_parameter: [4.0, 0.0, 90.0, 2.5, 90.0]
+      dwa_parameter: [0.1, 2.0, 2.5, 10.0, 0.8]
+goals:
+  num_of_goals: 4
+  goal:
+    goal0000:
+      corners:
+      - [-0.5, 3.5]
+      - [-0.5, 4.5]
+      - [0.5, 4.5]
+      - [0.5, 3.5]
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+    goal0001:
+      corners:
+      - [3.5, -0.5]
+      - [3.5, 0.5]
+      - [4.5, 0.5]
+      - [4.5, -0.5]
+      - [3.5, -0.5]
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+    goal0002:
+      corners:
+      - [-0.5, -3.5]
+      - [-0.5, -4.5]
+      - [0.5, -4.5]
+      - [0.5, -3.5]
+      - [-0.5, -3.5]
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+    goal0003:
+      corners:
+      - [-3.5, -0.5]
+      - [-3.5, 0.5]
+      - [-4.5, 0.5]
+      - [-4.5, -0.5]
+      - [-3.5, -0.5]
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+environment: {num_of_samples: 700, bounds: '-5, -5, 5, 5', obstacles: null}

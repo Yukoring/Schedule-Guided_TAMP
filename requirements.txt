@@ -1,0 +1,9 @@
+# Python 3.12; versions used for the reported runs (stack + baselines)
+numpy==2.3.5
+scipy==1.17.0
+shapely==2.1.2
+ortools==9.14.6206
+matplotlib==3.10.8
+PyYAML==6.0.3
+pandas==2.2.3
+protobuf==6.31.1

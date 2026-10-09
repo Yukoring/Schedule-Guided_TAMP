@@ -1,0 +1,6 @@
+ortools==9.15.6755
+numpy==2.3.5
+scipy==1.17.0
+matplotlib==3.10.8
+shapely==2.1.2
+PyYAML==6.0.3

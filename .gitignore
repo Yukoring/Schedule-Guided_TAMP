@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+common/_build/
+results/*
+!results/paper/
+visualization/traj/
+visualization/videos/
+visualization/by_instance/

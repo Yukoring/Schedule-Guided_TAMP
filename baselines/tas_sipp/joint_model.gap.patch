@@ -1,0 +1,34 @@
+56c56,58
+< def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False):
+---
+> def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False, gap_limit=None, cp_max_s=None):
+>     """gap_limit/cp_max_s (gap policy, 2026-10-07): CP-SAT runs at most cp_max_s (and never past wall_deadline) and stops early once the
+>     relative gap (T_hat - LB)/T_hat <= gap_limit; the best schedule found is returned either way (no first-feasible extension)."""
+226,227c228,237
+<     solver.parameters.max_time_in_seconds = max(0.001, wall_deadline-time.monotonic()) if wall_deadline else seconds
+<     solver.parameters.relative_gap_limit = 0
+---
+>     gap_policy = gap_limit is not None
+>     if gap_policy:
+>         first_after_base = False
+>         limit = cp_max_s if cp_max_s is not None else seconds
+>         if wall_deadline: limit = min(limit, wall_deadline-time.monotonic())
+>         solver.parameters.max_time_in_seconds = max(0.001, limit)
+>         solver.parameters.relative_gap_limit = gap_limit
+>     else:
+>         solver.parameters.max_time_in_seconds = max(0.001, wall_deadline-time.monotonic()) if wall_deadline else seconds
+>         solver.parameters.relative_gap_limit = 0
+259c269
+<                   time_limit=seconds, workers=workers, seed=seed,
+---
+>                   time_limit=(cp_max_s if gap_policy else seconds), gap_limit=gap_limit, workers=workers, seed=seed,
+262c272
+<                   policy='5s_then_first_feasible' if first_after_base else 'fixed_time',
+---
+>                   policy=('gap%.3f_max%ss' % (gap_limit, cp_max_s)) if gap_policy else ('5s_then_first_feasible' if first_after_base else 'fixed_time'),
+267c277,279
+<                       lower_bound=solver.best_objective_bound/SCALE)
+---
+>                       lower_bound=solver.best_objective_bound/SCALE,
+>                       relative_gap=(solver.objective_value-solver.best_objective_bound)/max(solver.objective_value,1e-9),
+>                       gap_reached=bool(gap_policy and (solver.objective_value-solver.best_objective_bound)/max(solver.objective_value,1e-9) <= gap_limit+1e-9))

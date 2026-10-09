@@ -1,0 +1,134 @@
+--- ../joint_tool_sipp_gapocc_20261007/joint_model.py	2026-10-07 23:13:47.110493470 +0900
++++ joint_model.py	2026-10-09 10:55:15.595904283 +0900
+@@ -53,12 +53,17 @@
+                 precedence=precedence)
+ 
+ 
+-def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False, gap_limit=None, cp_max_s=None, occupancy=False):
++def solve(instance, seconds=5.0, workers=4, seed=0, deadline=None, wall_deadline=None, first_after_base=False, gap_limit=None, cp_max_s=None, occupancy=False, regions=None):
+     """occupancy (2026-10-07, no-park configuration): vertex occupancy and explicit parking. Every node occupies its location from
+     arrival to departure, the start vertex is occupied from 0 to the first departure, and each robot ends with a park choice (stay at its
+     last location, its own start vertex, or any service location) that occupies the chosen vertex to the horizon; every vertex is a
+     NoOverlap resource (the task planner's vertex_free). Parking arrival is part of the makespan; park moves are emitted as 'park'
+     actions (goal >= G means the start vertex of robot goal-G)."""
++    """regions (SD+FB, 2026-10-09): collision regions fed back as spatial resources on top of the occupancy model. regions = dict(
++    n, cross[(a,b)] -> [(ridx,t_in,t_out)], cross_start[(r,b)], cross_to_start[(a,r)], inside[loc] -> [ridx]). Every chosen travel
++    (first move from the start vertex, node->node arc, park move) occupies each crossed region for [dep + t_in, dep + t_out] where dep is
++    the occupancy departure variable of the origin; a node at a location inside a region occupies it for [arr, dep]; a park vertex inside
++    a region occupies it to the horizon. NoOverlap per region. regions=None leaves the model unchanged."""
+     """gap_limit/cp_max_s (gap policy, 2026-10-07): CP-SAT runs at most cp_max_s (and never past wall_deadline) and stops early once the
+     relative gap (T_hat - LB)/T_hat <= gap_limit; the best schedule found is returned either way (no first-feasible extension)."""
+     build_start = time.perf_counter()
+@@ -170,6 +175,36 @@
+ 
+     robot_arc_count = 0
+     occ = {}; park = {}
++    region_ivs = {i: [] for i in range(regions['n'])} if regions else {}
++    def both(a, b, name):
++        lit = m.new_bool_var(name); m.add_bool_and([a, b]).only_enforce_if(lit); m.add_bool_or([a.Not(), b.Not()]).only_enforce_if(lit.Not()); return lit
++    def add_crossings(dep, lit, la, lb, name):
++        """region occupancy of a travel departing at dep (var) from la to lb; la/lb: int location, ('start', r) or a location IntVar."""
++        if not regions: return
++        if isinstance(la, tuple): table, keyf, idx, keys = regions['cross_start'], None, (lb if not isinstance(lb, int) else None), [(la[1], b) for b in range(G)]
++        elif isinstance(lb, tuple): table, idx, keys = regions['cross_to_start'], (la if not isinstance(la, int) else None), [(a, lb[1]) for a in range(G)]
++        else: table = regions['cross']; idx = None; keys = None
++        if isinstance(la, tuple) and isinstance(lb, int) or isinstance(lb, tuple) and isinstance(la, int) or (isinstance(la, int) and isinstance(lb, int)):
++            key = (la[1], lb) if isinstance(la, tuple) else ((la, lb[1]) if isinstance(lb, tuple) else (la, lb))
++            for ridx, t_in, t_out in table.get(key, []):
++                sv = m.new_int_var(0, 2*H, ''); m.add(sv == dep + t_in); ev_ = m.new_int_var(0, 2*H, ''); m.add(ev_ == dep + t_out)
++                region_ivs[ridx].append(m.new_optional_interval_var(sv, t_out - t_in, ev_, lit, f'{name}_occ{ridx}'))
++            return
++        if keys is None:
++            if isinstance(lb, int): idx = la; keys = [(a, lb) for a in range(G)]
++            elif isinstance(la, int): idx = lb; keys = [(la, b) for b in range(G)]
++            else: idx = m.new_int_var(0, G*G-1, f'{name}_pix'); m.add(idx == la*G + lb); keys = [(a, b) for a in range(G) for b in range(G)]
++        for ridx in range(regions['n']):
++            tin = []; tout = []; cross = []
++            for k in keys:
++                hit = next(((ti, to) for rr, ti, to in table.get(k, []) if rr == ridx), None)
++                cross.append(1 if hit else 0); tin.append(hit[0] if hit else 0); tout.append(hit[1] if hit else 1)
++            if not any(cross): continue
++            c = m.new_bool_var(f'{name}_cross{ridx}'); m.add_element(idx, cross, c)
++            vin = m.new_int_var(0, H, ''); vout = m.new_int_var(0, H, ''); m.add_element(idx, tin, vin); m.add_element(idx, tout, vout)
++            vsize = m.new_int_var(1, H, ''); m.add(vsize == vout - vin)
++            sv = m.new_int_var(0, 2*H, ''); m.add(sv == dep + vin); ev_ = m.new_int_var(0, 2*H, ''); m.add(ev_ == dep + vout)
++            region_ivs[ridx].append(m.new_optional_interval_var(sv, vsize, ev_, both(lit, c, f'{name}_occlit{ridx}'), f'{name}_occ{ridx}'))
+     if occupancy:
+         for n, a in enumerate(nodes):
+             a['arr'] = m.new_int_var(0, H, f'arr{n}'); a['dep'] = m.new_int_var(0, H, f'dep{n}')
+@@ -186,6 +221,17 @@
+                     at_v = m.new_bool_var(f'node{n}_at{v}'); m.add(a['loc'] == v).only_enforce_if(at_v); m.add(a['loc'] != v).only_enforce_if(at_v.Not())
+                     lit = m.new_bool_var(''); m.add_bool_and([pres, at_v]).only_enforce_if(lit); m.add_bool_or([pres.Not(), at_v.Not()]).only_enforce_if(lit.Not())
+                     occ.setdefault(v, []).append(m.new_optional_interval_var(a['arr'], size, a['dep'], lit, f'occ{n}_{v}'))
++            if regions:
++                rsize = m.new_int_var(0, H, ''); m.add(rsize == a['dep'] - a['arr'])
++                if isinstance(a['loc'], int):
++                    for ridx in regions['inside'].get(a['loc'], []):
++                        region_ivs[ridx].append(m.new_interval_var(a['arr'], rsize, a['dep'], f'node{n}_reg{ridx}') if a['kind'] == 'service' else m.new_optional_interval_var(a['arr'], rsize, a['dep'], pres, f'node{n}_reg{ridx}'))
++                else:
++                    for ridx in range(regions['n']):
++                        table = [1 if ridx in regions['inside'].get(l, []) else 0 for l in range(G)]
++                        if not any(table): continue
++                        c = m.new_bool_var(f'node{n}_inside{ridx}'); m.add_element(a['loc'], table, c)
++                        region_ivs[ridx].append(m.new_optional_interval_var(a['arr'], rsize, a['dep'], c if a['kind'] == 'service' else both(pres, c, f'node{n}_insidelit{ridx}'), f'node{n}_reg{ridx}'))
+     for r, robot in enumerate(robots):
+         available = [n for n, a in enumerate(nodes) if tasks[a['task']]['type'] in robot['durations']]
+         arcs, intervals = [], []
+@@ -218,6 +264,7 @@
+             m.add(a['s'] >= initial).only_enforce_if(first)
+             if occupancy:
+                 m.add(a['arr'] >= dep0 + initial).only_enforce_if(first)
++                add_crossings(dep0, first, ('start', r), loc, f'r{r}_start_{n}')
+                 # park choices after this node when it is the robot's last one
+                 chs = []
+                 cand = [(v, dist[loc][v] if isinstance(loc, int) else None) for v in range(G)] + [(G + r, startdist[r][loc] if isinstance(loc, int) else None)]
+@@ -226,6 +273,12 @@
+                         continue
+                     c = m.new_bool_var(f'r{r}_park{n}_{v}'); chs.append(c); park[r]['choices'].append((c, n, v, tr))
+                     m.add(arr_park >= a['dep'] + tr).only_enforce_if(c)
++                    if regions and v != loc:
++                        add_crossings(a['dep'], c, loc, (v if v < G else ('start', r)), f'r{r}_parkmove{n}_{v}')
++                    if regions:
++                        for ridx in (regions['inside'].get(v, []) if v < G else regions['inside_start'].get(r, [])):
++                            psz = m.new_int_var(0, H, ''); m.add(psz == H - arr_park)
++                            region_ivs[ridx].append(m.new_optional_interval_var(arr_park, psz, H, c, f'r{r}_park{n}_{v}_reg{ridx}'))
+                     if v == loc:
+                         m.add(arr_park == a['dep']).only_enforce_if(c)
+                     sz = m.new_int_var(0, H, ''); m.add(sz == H - arr_park)
+@@ -248,6 +301,7 @@
+                 m.add(nodes[q]['s'] >= nodes[n]['e'] + travel(n, q)).only_enforce_if(arc)
+                 if occupancy:
+                     m.add(nodes[q]['arr'] >= nodes[n]['dep'] + travel(n, q)).only_enforce_if(arc)
++                    add_crossings(nodes[n]['dep'], arc, nodes[n]['loc'], nodes[q]['loc'], f'r{r}_{n}_{q}')
+                 robot_arc_count += 1
+         m.add_circuit(arcs)
+         m.add_no_overlap(intervals)
+@@ -266,6 +320,9 @@
+         for v, ivs in occ.items():
+             if len(ivs) > 1:
+                 m.add_no_overlap(ivs)
++        for ridx, ivs in region_ivs.items():
++            if len(ivs) > 1:
++                m.add_no_overlap(ivs)
+     end = m.new_int_var(0, H, 'makespan')
+     m.add_max_equality(end, [a['e'] for a in nodes] + ([p['arr_park'] for p in park.values()] if occupancy else []))
+     if deadline is not None:
+@@ -333,7 +390,8 @@
+                 actions.append(dict(node=n, kind=a['kind'], task=a['task'],
+                                     robot=solver.value(owners[a['task']]),
+                                     goal=solver.value(a['loc']),
+-                                    start=solver.value(a['s']), end=solver.value(a['e'])))
++                                    start=solver.value(a['s']), end=solver.value(a['e']),
++                                    **({'arr': solver.value(a['arr']), 'dep': solver.value(a['dep'])} if occupancy else {})))
+         if occupancy:
+             result['parking'] = []
+             for r, p in park.items():
+@@ -344,6 +402,8 @@
+                     if v != nodes[n]['loc']:
+                         actions.append(dict(node=-1, kind='park', task=None, robot=r, goal=v, start=t_dep, end=t_arr))
+             result['occupancy'] = {'vertices': len(occ), 'intervals': sum(len(x) for x in occ.values())}
++            result['start_departure'] = {r: solver.value(p['dep0']) for r, p in park.items()}
++            result['regions'] = regions['n'] if regions else 0; result['region_intervals'] = sum(len(v) for v in region_ivs.values())
+         result['actions'] = sorted(actions, key=lambda a: (a['start'], a['robot'], a['end']))
+         result['tool_arcs'] = [list(k) for k, v in tool_selected.items() if solver.value(v)]
+         result['validation_errors'] = validate(instance, result)

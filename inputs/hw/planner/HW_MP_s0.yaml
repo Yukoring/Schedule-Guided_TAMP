@@ -1,0 +1,163 @@
+robots:
+  num_of_robot: 4
+  robot:
+    robot0000:
+      state:
+      - -3.621
+      - -3.743333
+      - 0
+      - 0
+      - 0
+      robot_radius: 0.833333
+      service: taska, taskb, taskc, taskd
+      action_cost:
+      - 30.0
+      - 60.0
+      - 1.0
+      - 15.0
+      ctr_parameter: &id001
+      - 4.0
+      - 0.0
+      - 90.0
+      - 2.5
+      - 90.0
+      dwa_parameter: &id002
+      - 0.1
+      - 2.0
+      - 2.5
+      - 10.0
+      - 0.8
+    robot0001:
+      state:
+      - 3.513667
+      - 3.505667
+      - 0
+      - 0
+      - 0
+      robot_radius: 0.833333
+      service: taska, taskb, taskc, taskd
+      action_cost:
+      - 1.0
+      - 15.0
+      - 30.0
+      - 60.0
+      ctr_parameter: *id001
+      dwa_parameter: *id002
+    robot0002:
+      state:
+      - 3.771
+      - -3.529
+      - 0
+      - 0
+      - 0
+      robot_radius: 0.833333
+      service: taska, taskb, taskc, taskd
+      action_cost:
+      - 15.0
+      - 30.0
+      - 60.0
+      - 1.0
+      ctr_parameter: *id001
+      dwa_parameter: *id002
+    robot0003:
+      state:
+      - -3.631
+      - 3.743
+      - 0
+      - 0
+      - 0
+      robot_radius: 0.833333
+      service: taska, taskb, taskc, taskd
+      action_cost:
+      - 60.0
+      - 1.0
+      - 15.0
+      - 30.0
+      ctr_parameter: *id001
+      dwa_parameter: *id002
+goals:
+  num_of_goals: 4
+  goal:
+    goal0000:
+      corners:
+      - - -1.0
+        - 2.5
+      - - -1.0
+        - 4.5
+      - - 1.0
+        - 4.5
+      - - 1.0
+        - 2.5
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+      order:
+      - taska-taskd
+      - taskd-taskc
+      - taskc-taskb
+    goal0001:
+      corners:
+      - - 2.5
+        - -1.0
+      - - 2.5
+        - 1.0
+      - - 4.5
+        - 1.0
+      - - 4.5
+        - -1.0
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+      order:
+      - taskd-taskc
+      - taskc-taskb
+      - taskb-taska
+    goal0002:
+      corners:
+      - - -1.0
+        - -4.5
+      - - -1.0
+        - -2.5
+      - - 1.0
+        - -2.5
+      - - 1.0
+        - -4.5
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+      order:
+      - taskc-taskb
+      - taskb-taska
+      - taska-taskd
+    goal0003:
+      corners:
+      - - -4.5
+        - -1.0
+      - - -4.5
+        - 1.0
+      - - -2.5
+        - 1.0
+      - - -2.5
+        - -1.0
+      based: region
+      shape: polygon
+      service: taska, taskb, taskc, taskd
+      service_type: single_task, single_task, single_task, single_task
+      order:
+      - taskb-taska
+      - taska-taskd
+      - taskd-taskc
+environment:
+  num_of_samples: 200
+  bounds: -4.83333, -4.83333, 4.83333, 4.83333
+  obstacles: null
+hw_meta:
+  units: internal (1 unit = 0.30 m), s
+  mission: MP
+  seed: 0
+  scale_m_per_unit: 0.3
+  display_name: HW_MP_s0
+  arena_m: 2.9

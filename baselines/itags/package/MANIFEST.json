@@ -1,0 +1,79 @@
+{
+ "files": [
+  {
+   "path": "CMakeLists.txt",
+   "bytes": 1620,
+   "sha256": "4d4c59e688daf1a8ea5a88e3b5433b81bdea9448b1d384594194af524707edf5"
+  },
+  {
+   "path": "LICENSE.upstream",
+   "bytes": 35148,
+   "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+  },
+  {
+   "path": "PROVENANCE.json",
+   "bytes": 1011,
+   "sha256": "2419d6962b794f8de49356f8b1676c2762d9abbd9c0c4cd761dfe29f5a164db9"
+  },
+  {
+   "path": "build.sh",
+   "bytes": 1150,
+   "sha256": "8c091bef4df45c11ebf99e19e6c25daced62121c31c7debcd0823750fb64f0f3"
+  },
+  {
+   "path": "compatibility.patch",
+   "bytes": 17582,
+   "sha256": "3544675677ede86e00ab96376c9b425f2606cee4c8d82180220c97c6a0deba50"
+  },
+  {
+   "path": "convert_inputs.py",
+   "bytes": 8166,
+   "sha256": "76748c69a6e09bad8d8a2a2d7a3f7f6782043dabccd4308ae0d8dbab06170602"
+  },
+  {
+   "path": "cpsat_model.cpp",
+   "bytes": 4968,
+   "sha256": "5a171f7e3d6feb8b71df04a1e7b06cb8ec4eb9b3c39987c4fa4f5617376af839"
+  },
+  {
+   "path": "cpsat_model.hpp",
+   "bytes": 1019,
+   "sha256": "5ac14a04746e560475bebc971de8ea6eb27078c67435fc56566a120ea8192df5"
+  },
+  {
+   "path": "cpsat_scheduler.cpp",
+   "bytes": 7525,
+   "sha256": "2b8507dd672024c3d5f12a884b185d3e92d1ec8e800f8916ec105ab84a3761cf"
+  },
+  {
+   "path": "cpsat_scheduler.hpp",
+   "bytes": 1088,
+   "sha256": "c8a49d7bb342b9d66dc77975c34f4ec01c99edadf651b885eb50f02df89d55bd"
+  },
+  {
+   "path": "itags_cli.cpp",
+   "bytes": 4170,
+   "sha256": "d4f4fbfe8fd7991f36dfcc506da84279d46aa34560e1fa36bfce2444ff288e9a"
+  },
+  {
+   "path": "numeric_cli.cpp",
+   "bytes": 427,
+   "sha256": "c23f1343855fd41d7583b7d2468f313b75b61b74bde6b2fa2cf051b7530a4dbd"
+  },
+  {
+   "path": "run_cases.py",
+   "bytes": 2643,
+   "sha256": "409a5074753d61dcd875e3e79d3c514f4d9478f7f6d69ab06d2176585572443b"
+  },
+  {
+   "path": "upstream_cpsat.patch",
+   "bytes": 27840,
+   "sha256": "ec9736d0e644707a77d31afd084402c2026b8cb52f92da17610ad39b2d9a9ef5"
+  },
+  {
+   "path": "verify_numeric.py",
+   "bytes": 3709,
+   "sha256": "c9c9b5031cc0309eaf682ce4f4eafc87655076f089114e852eaeccc306f27170"
+  }
+ ]
+}

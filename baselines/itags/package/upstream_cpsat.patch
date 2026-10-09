@@ -1,0 +1,510 @@
+diff --git a/include/grstapse/common/search/a_star/a_star.hpp b/include/grstapse/common/search/a_star/a_star.hpp
+index 1bd101d..46e60e4 100644
+--- a/include/grstapse/common/search/a_star/a_star.hpp
++++ b/include/grstapse/common/search/a_star/a_star.hpp
+@@ -57,7 +57,7 @@ namespace grstapse
+          */
+         explicit AStar(const std::shared_ptr<const BestFirstSearchParameters>& parameters,
+                        const AStarFunctors<SearchNode>& functors)
+-            : Base{.parameters = parameters, .functors = functors}
++            : Base{parameters, functors}
+             , m_path_cost(functors.path_cost)
+         {}
+ 
+diff --git a/include/grstapse/common/search/a_star/a_star_functors.hpp b/include/grstapse/common/search/a_star/a_star_functors.hpp
+index 889808c..dc93212 100644
+--- a/include/grstapse/common/search/a_star/a_star_functors.hpp
++++ b/include/grstapse/common/search/a_star/a_star_functors.hpp
+@@ -67,12 +67,12 @@ namespace grstapse
+                           std::make_shared<const NullPruningMethod<SearchNode>>(),
+                       const std::shared_ptr<const typename Base::PruningMethod>& postpruning_method =
+                           std::make_shared<const NullPruningMethod<SearchNode>>())
+-            : Base{.heuristic           = heuristic,
+-                   .successor_generator = successor_generator,
+-                   .goal_check          = goal_check,
+-                   .memoization         = memoization,
+-                   .prepruning_method   = prepruning_method,
+-                   .postpruning_method  = postpruning_method}
++            : Base{heuristic,
++                   successor_generator,
++                   goal_check,
++                   memoization,
++                   prepruning_method,
++                   postpruning_method}
+             , path_cost(path_cost)
+         {}
+ 
+diff --git a/include/grstapse/common/search/best_first_search_parameters.hpp b/include/grstapse/common/search/best_first_search_parameters.hpp
+index c2e27c8..3a736e4 100644
+--- a/include/grstapse/common/search/best_first_search_parameters.hpp
++++ b/include/grstapse/common/search/best_first_search_parameters.hpp
+@@ -45,7 +45,7 @@ namespace grstapse
+                                   const std::string& timer_name,
+                                   bool save_pruned_nodes = false,
+                                   bool save_closed_nodes = false)
+-            : SearchParameters{.has_timeout = has_timeout, .timeout = timeout, .timer_name = timer_name}
++            : SearchParameters{has_timeout, timeout, timer_name}
+             , save_pruned_nodes(save_pruned_nodes)
+             , save_closed_nodes(save_closed_nodes)
+         {}
+diff --git a/include/grstapse/common/search/greedy_best_first_search/greedy_best_first_search.hpp b/include/grstapse/common/search/greedy_best_first_search/greedy_best_first_search.hpp
+index 4be7b6c..7f5dcc8 100644
+--- a/include/grstapse/common/search/greedy_best_first_search/greedy_best_first_search.hpp
++++ b/include/grstapse/common/search/greedy_best_first_search/greedy_best_first_search.hpp
+@@ -54,7 +54,7 @@ namespace grstapse
+          */
+         GreedyBestFirstSearch(const std::shared_ptr<const BestFirstSearchParameters>& parameters,
+                               const BestFirstSearchFunctors<SearchNode>& functors)
+-            : Base{.parameters = parameters, .functors = functors}
++            : Base{parameters, functors}
+         {}
+ 
+        protected:
+diff --git a/include/grstapse/common/search/search_node_base.hpp b/include/grstapse/common/search/search_node_base.hpp
+index e5d5137..b208f90 100644
+--- a/include/grstapse/common/search/search_node_base.hpp
++++ b/include/grstapse/common/search/search_node_base.hpp
+@@ -25,6 +25,7 @@
+ // Global
+ #include <algorithm>
+ #include <memory>
++#include <functional>
+ #include <vector>
+ 
+ #include <type_traits>
+diff --git a/include/grstapse/common/utilities/logger.hpp b/include/grstapse/common/utilities/logger.hpp
+index ed6b6da..38264bd 100644
+--- a/include/grstapse/common/utilities/logger.hpp
++++ b/include/grstapse/common/utilities/logger.hpp
+@@ -58,7 +58,7 @@ namespace grstapse
+         template <typename... Args>
+         static void debug(const std::string &message, Args &&...args)
+         {
+-            getInstance()->debug(message.c_str(), std::forward<Args>(args)...);
++            getInstance()->debug(fmt::runtime(message), std::forward<Args>(args)...);
+         }
+ 
+         /**!
+@@ -74,7 +74,7 @@ namespace grstapse
+         template <typename... Args>
+         static void info(const std::string &message, Args &&...args)
+         {
+-            getInstance()->info(message.c_str(), std::forward<Args>(args)...);
++            getInstance()->info(fmt::runtime(message), std::forward<Args>(args)...);
+         }
+ 
+         /**!
+@@ -90,7 +90,7 @@ namespace grstapse
+         template <typename... Args>
+         static void warn(const std::string &message, Args &&...args)
+         {
+-            getInstance()->warn(message.c_str(), std::forward<Args>(args)...);
++            getInstance()->warn(fmt::runtime(message), std::forward<Args>(args)...);
+         }
+ 
+         /**!
+@@ -106,7 +106,7 @@ namespace grstapse
+         template <typename... Args>
+         static void error(const std::string &message, Args &&...args)
+         {
+-            getInstance()->error(message.c_str(), std::forward<Args>(args)...);
++            getInstance()->error(fmt::runtime(message), std::forward<Args>(args)...);
+         }
+ 
+         /**!
+@@ -122,7 +122,7 @@ namespace grstapse
+         template <typename... Args>
+         static void critical(const std::string &message, Args &&...args)
+         {
+-            getInstance()->critical(message.c_str(), std::forward<Args>(args)...);
++            getInstance()->critical(fmt::runtime(message), std::forward<Args>(args)...);
+         }
+ 
+        private:
+diff --git a/include/grstapse/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints_parameters.hpp b/include/grstapse/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints_parameters.hpp
+index ee763fb..b5f48b6 100644
+--- a/include/grstapse/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints_parameters.hpp
++++ b/include/grstapse/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints_parameters.hpp
+@@ -39,11 +39,11 @@ namespace grstapse
+                                  float timeout          = std::numeric_limits<float>::max(),
+                                  bool save_pruned_nodes = false,
+                                  bool save_closed_nodes = false)
+-            : BestFirstSearchParameters{.has_timeout       = has_timeout,
+-                                        .timeout           = timeout,
+-                                        .timer_name        = timer_name,
+-                                        .save_pruned_nodes = save_closed_nodes,
+-                                        .save_closed_nodes = save_closed_nodes}
++            : BestFirstSearchParameters{has_timeout,
++                                        timeout,
++                                        timer_name,
++                                        save_closed_nodes,
++                                        save_closed_nodes}
+         {}
+     };
+ }  // namespace grstapse
+\ No newline at end of file
+diff --git a/include/grstapse/scheduling/scheduler_parameters.hpp b/include/grstapse/scheduling/scheduler_parameters.hpp
+index 4763cc9..e0ca41d 100644
+--- a/include/grstapse/scheduling/scheduler_parameters.hpp
++++ b/include/grstapse/scheduling/scheduler_parameters.hpp
+@@ -35,10 +35,11 @@ namespace grstapse
+     enum class SchedulerType : uint8_t
+     {
+         e_unknown = 0,
+-        e_milp
++        e_milp,
++        e_cpsat
+     };
+     NLOHMANN_JSON_SERIALIZE_ENUM(SchedulerType,
+-                                 {{SchedulerType::e_unknown, "unknown"}, {SchedulerType::e_milp, "milp"}});
++                                 {{SchedulerType::e_unknown, "unknown"}, {SchedulerType::e_milp, "milp"}, {SchedulerType::e_cpsat, "cpsat"}});
+ 
+     /**!
+      * Base class for the parameters for scheduling algorithms
+diff --git a/include/grstapse/task.hpp b/include/grstapse/task.hpp
+index 844c06a..c0badf8 100644
+--- a/include/grstapse/task.hpp
++++ b/include/grstapse/task.hpp
+@@ -24,6 +24,8 @@
+ 
+ // Global
+ #include <memory>
++#include <map>
++#include <string>
+ // External
+ #include <Eigen/Core>
+ 
+@@ -90,7 +92,12 @@ namespace grstapse
+         //! Computes the duration of a task based on a specified coalition
+         [[nodiscard]] float computeDuration(const std::vector<std::shared_ptr<const Robot>>& coalition) const;
+ 
++        // Optional MRMG extension. Empty map preserves the upstream task model.
++        void setServiceDurations(const std::map<std::string,float>& durations);
++        float serviceDuration(const std::vector<std::shared_ptr<const Robot>>& coalition) const;
++
+        private:
++        std::map<std::string,float> m_service_durations;
+         std::shared_ptr<SasAction> m_symbolic_action;
+         Eigen::VectorXf m_desired_traits;
+         std::shared_ptr<const ConfigurationBase> m_initial_configuration;
+diff --git a/include/grstapse/task_allocation/itags/itags.hpp b/include/grstapse/task_allocation/itags/itags.hpp
+index b820bde..656bc24 100644
+--- a/include/grstapse/task_allocation/itags/itags.hpp
++++ b/include/grstapse/task_allocation/itags/itags.hpp
+@@ -37,7 +37,7 @@
+ #include "grstapse/geometric_planning/motion_planning_query_result_base.hpp"
+ #include "grstapse/grstaps_problem_inputs.hpp"
+ #include "grstapse/robot.hpp"
+-#include "grstapse/scheduling/milp/deterministic/deterministic_milp_scheduler.hpp"
++#include "cpsat_scheduler.hpp"
+ #include "grstapse/scheduling/milp/deterministic/deterministic_schedule.hpp"
+ #include "grstapse/scheduling/scheduler_base.hpp"
+ #include "grstapse/task.hpp"
+@@ -78,15 +78,13 @@ namespace grstapse
+          * @param parameters
+          */
+         explicit Itags(const std::shared_ptr<const ItagsProblemInputs> &problem_inputs)
+-            : Base{.parameters = problem_inputs->itagsParameters(),
+-                   .functors   = {.heuristic = std::make_shared<const HeuristicDeriv>(problem_inputs),
+-                                  .successor_generator =
+-                                      std::make_shared<const IncrementalAllocationGenerator<NodeDeriv>>(problem_inputs),
+-                                  .goal_check  = std::make_shared<const DesiredTraitsCheck<NodeDeriv>>(problem_inputs),
+-                                  .memoization = std::make_shared<const HashMemoization<NodeDeriv>>(),
+-                                  .prepruning_method =
+-                                      std::make_shared<const TraitsImprovementPruning<NodeDeriv>>(problem_inputs),
+-                                  .postpruning_method = std::make_shared<const NullPruningMethod<NodeDeriv>>()}}
++            : Base{problem_inputs->itagsParameters(),
++                   {std::make_shared<const HeuristicDeriv>(problem_inputs),
++                                  std::make_shared<const IncrementalAllocationGenerator<NodeDeriv>>(problem_inputs),
++                                  std::make_shared<const DesiredTraitsCheck<NodeDeriv>>(problem_inputs),
++                                  std::make_shared<const HashMemoization<NodeDeriv>>(),
++                                  std::make_shared<const TraitsImprovementPruning<NodeDeriv>>(problem_inputs),
++                                  std::make_shared<const NullPruningMethod<NodeDeriv>>()}}
+             , m_problem_inputs(problem_inputs)
+         {}
+ 
+@@ -113,7 +111,7 @@ namespace grstapse
+             const unsigned int num_robots = m_problem_inputs->numberOfRobots();
+             const unsigned int num_tasks  = m_problem_inputs->numberOfPlanTasks();
+             // Allocation matrix is M X N (number_of_tasks X number_of_robots)
+-            return std::make_shared<NodeDeriv>(MatrixDimensions{.height = num_tasks, .width = num_robots});
++            return std::make_shared<NodeDeriv>(MatrixDimensions{num_tasks, num_robots});
+         }
+ 
+         void writeSolutionToFile(const std::string &filepath, const std::shared_ptr<NodeDeriv> &solution)
+@@ -255,7 +253,7 @@ namespace grstapse
+                 stats_j[constants::k_num_motion_plans]          = num_motion_plans;
+                 stats_j[constants::k_num_motion_plan_failures]  = MotionPlannerBase::numFailures();
+                 stats_j[constants::k_num_scheduling_failures]   = SchedulerBase::numFailures();
+-                stats_j[constants::k_num_scheduling_iterations] = MilpSchedulerBase::numIterations();
++                stats_j[constants::k_num_scheduling_iterations] = CpSatScheduler::numIterations();
+                 solution_j[constants::k_statistics]             = stats_j;
+             }
+ 
+diff --git a/include/grstapse/task_allocation/itags/normalized_schedule_quality.hpp b/include/grstapse/task_allocation/itags/normalized_schedule_quality.hpp
+index 7f5c333..8cf3407 100644
+--- a/include/grstapse/task_allocation/itags/normalized_schedule_quality.hpp
++++ b/include/grstapse/task_allocation/itags/normalized_schedule_quality.hpp
+@@ -27,7 +27,7 @@
+ #include <tuple>
+ // Local
+ #include "grstapse/common/search/heuristic_base.hpp"
+-#include "grstapse/scheduling/milp/deterministic/deterministic_milp_scheduler.hpp"
++#include "cpsat_scheduler.hpp"
+ #include "grstapse/scheduling/schedule_base.hpp"
+ #include "grstapse/scheduling/scheduler_problem_inputs.hpp"
+ #include "grstapse/task_allocation/itags/task_allocation_node_base.hpp"
+@@ -76,7 +76,7 @@ namespace grstapse {
+             auto scheduler_problem_inputs = std::make_shared<SchedulerProblemInputs>(m_problem_inputs,
+                                                                                      node->allocation(),
+                                                                                      computeMutexConstraints(node));
+-            DeterministicMilpScheduler scheduler(scheduler_problem_inputs);
++            CpSatScheduler scheduler(scheduler_problem_inputs);
+             node->m_schedule = scheduler.solve();
+             if (!node->m_schedule) {
+                 return std::numeric_limits<float>::infinity();
+diff --git a/src/geometric_planning/graph/point/point_graph_motion_planner.cpp b/src/geometric_planning/graph/point/point_graph_motion_planner.cpp
+index 086a141..cb1017e 100644
+--- a/src/geometric_planning/graph/point/point_graph_motion_planner.cpp
++++ b/src/geometric_planning/graph/point/point_graph_motion_planner.cpp
+@@ -41,16 +41,16 @@ namespace grstapse
+         const std::shared_ptr<PointGraphEnvironment>& graph)
+         : GraphMotionPlannerBase(parameters, graph)
+         , m_search_parameters(
+-              new BestFirstSearchParameters{.has_timeout = parameters->timeout > 0.0f,
+-                                            .timeout     = parameters->timeout,
+-                                            .timer_name  = constants::k_motion_planning_time + std::string("a_star"),
+-                                            .save_pruned_nodes = false,
+-                                            .save_closed_nodes = false})
++              new BestFirstSearchParameters{parameters->timeout > 0.0f,
++                                            parameters->timeout,
++                                            constants::k_motion_planning_time + std::string("a_star"),
++                                            false,
++                                            false})
+         , m_astar_functors({
+-              .pathcost            = std::make_shared<const UndirectedGraphPathCost<SearchNode>>(),
+-              .heuristic           = nullptr,  // Gets set for each A* search individually
+-              .successor_generator = std::make_shared<const UndirectedGraphSuccessorGenerator<SearchNode>>(graph),
+-              .goal_check          = nullptr  // Gets set for each A* search individually
++              std::make_shared<const UndirectedGraphPathCost<SearchNode>>(),
++              nullptr,  // Gets set for each A* search individually
++              std::make_shared<const UndirectedGraphSuccessorGenerator<SearchNode>>(graph),
++              nullptr  // Gets set for each A* search individually
+           })
+         , m_graph(graph)
+     {}
+diff --git a/src/geometric_planning/grid/grid_search.cpp b/src/geometric_planning/grid/grid_search.cpp
+index 45aa7aa..83e3c31 100644
+--- a/src/geometric_planning/grid/grid_search.cpp
++++ b/src/geometric_planning/grid/grid_search.cpp
+@@ -34,11 +34,11 @@ namespace grstapse
+                            const std::shared_ptr<const GridMap>& map,
+                            const std::shared_ptr<const GridCell>& initial,
+                            const std::shared_ptr<const GridCell>& goal)
+-        : Base{.parameters = parameters,
+-               .functors   = {.path_cost = std::make_shared<const GridCellPathCost<GridCellNode>>(),
+-                              .heuristic = std::make_shared<const GridCellEuclideanDistance<GridCellNode>>(goal),
+-                              .successor_generator = std::make_shared<const GridCellCardinalsGenerator>(map),
+-                              .goal_check          = std::make_shared<const GridCellGoalCheck<GridCellNode>>(goal)}}
++        : Base{parameters,
++               {std::make_shared<const GridCellPathCost<GridCellNode>>(),
++                              std::make_shared<const GridCellEuclideanDistance<GridCellNode>>(goal),
++                              std::make_shared<const GridCellCardinalsGenerator>(map),
++                              std::make_shared<const GridCellGoalCheck<GridCellNode>>(goal)}}
+         , m_initial(initial)
+     {}
+ 
+diff --git a/src/geometric_planning/mapf/cbs/high_level/conflict_based_search_parameters.cpp b/src/geometric_planning/mapf/cbs/high_level/conflict_based_search_parameters.cpp
+index de012fc..84ee03f 100644
+--- a/src/geometric_planning/mapf/cbs/high_level/conflict_based_search_parameters.cpp
++++ b/src/geometric_planning/mapf/cbs/high_level/conflict_based_search_parameters.cpp
+@@ -33,8 +33,8 @@ namespace grstapse
+         const std::string& low_level_timer_name,
+         bool has_timeout,
+         float timeout)
+-        : MultiAgentPathFindingParameters{.map = map, .initial_states = initial_states, .goal_states = goal_states}
+-        , SearchParameters{.has_timeout = has_timeout, .timeout = timeout, .timer_name = high_level_timer_name}
++        : MultiAgentPathFindingParameters{map, initial_states, goal_states}
++        , SearchParameters{has_timeout, timeout, high_level_timer_name}
+         , cost_type(cost_type)
+         , low_level_timer_name(low_level_timer_name)
+     {}
+diff --git a/src/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints.cpp b/src/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints.cpp
+index f1e7013..f596f50 100644
+--- a/src/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints.cpp
++++ b/src/geometric_planning/mapf/cbs/low_level/space_time_a_star_with_constraints.cpp
+@@ -39,14 +39,13 @@ namespace grstapse
+         const std::shared_ptr<const GridCell>& initial,
+         const std::shared_ptr<const GridCell>& goal,
+         const robin_hood::unordered_set<std::shared_ptr<const ConstraintBase>>& constraints)
+-        : Base{.parameters = parameters,
+-               .functors   = {.path_cost = std::make_shared<const TemporalGridCellPathCost>(),
+-                              .heuristic = std::make_shared<const GridCellManhattanDistance<TemporalGridCellNode>>(goal),
+-                              .successor_generator = std::make_shared<const GridCellCardinalsPlusWaitGenerator>(map),
+-                              .goal_check =
+-                                std::make_shared<const TemporalGridCellGoalCheckWithConstraints>(goal, constraints),
+-                              .memoization    = std::make_shared<const NullMemoization<TemporalGridCellNode>>(),
+-                              .pruning_method = std::make_shared<const PruneConstraints>(constraints)}}
++        : Base{parameters,
++               {std::make_shared<const TemporalGridCellPathCost>(),
++                              std::make_shared<const GridCellManhattanDistance<TemporalGridCellNode>>(goal),
++                              std::make_shared<const GridCellCardinalsPlusWaitGenerator>(map),
++                              std::make_shared<const TemporalGridCellGoalCheckWithConstraints>(goal, constraints),
++                              std::make_shared<const NullMemoization<TemporalGridCellNode>>(),
++                              std::make_shared<const PruneConstraints>(constraints)}}
+         , m_initial(initial)
+     {}
+ 
+diff --git a/src/geometric_planning/ompl/pgm_environment.cpp b/src/geometric_planning/ompl/pgm_environment.cpp
+index ff51efe..e9cdbc9 100644
+--- a/src/geometric_planning/ompl/pgm_environment.cpp
++++ b/src/geometric_planning/ompl/pgm_environment.cpp
+@@ -36,7 +36,7 @@
+ namespace grstapse
+ {
+     PgmEnvironment::PgmEnvironment()
+-        : OmplEnvironment{.environment_type = OmplEnvironmentType::e_pgm, .state_space_type = OmplStateSpaceType::e_se2}
++        : OmplEnvironment{OmplEnvironmentType::e_pgm, OmplStateSpaceType::e_se2}
+     {
+         m_state_space = std::make_shared<ompl::base::SE2StateSpace>();
+     }
+@@ -45,7 +45,7 @@ namespace grstapse
+                                    const float resolution,
+                                    const float origin_x,
+                                    const float origin_y)
+-        : OmplEnvironment{.environment_type = OmplEnvironmentType::e_pgm, .state_space_type = OmplStateSpaceType::e_se2}
++        : OmplEnvironment{OmplEnvironmentType::e_pgm, OmplStateSpaceType::e_se2}
+         , m_resolution(resolution)
+         , m_origin_x(origin_x)
+         , m_origin_y(origin_y)
+diff --git a/src/scheduling/scheduler_parameters.cpp b/src/scheduling/scheduler_parameters.cpp
+index 8f39fd0..5eb032b 100644
+--- a/src/scheduling/scheduler_parameters.cpp
++++ b/src/scheduling/scheduler_parameters.cpp
+@@ -25,7 +25,7 @@
+ // Local
+ #include "grstapse/common/utilities/constants.hpp"
+ #include "grstapse/common/utilities/error.hpp"
+-#include "grstapse/scheduling/milp/milp_scheduler_parameters.hpp"
++#include "cpsat_scheduler.hpp"
+ #include "grstapse/common/utilities/json_field_validator.hpp"
+ 
+ namespace grstapse
+@@ -36,9 +36,9 @@ namespace grstapse
+         const SchedulerType type = j.at(constants::k_scheduler_type).get<SchedulerType>();
+         switch(type)
+         {
+-            case SchedulerType::e_milp:
++            case SchedulerType::e_cpsat:
+             {
+-                return MilpSchedulerParameters::deserializeFromJson(j);
++                return CpSatSchedulerParameters::fromJson(j);
+             }
+             default:
+             {
+diff --git a/src/task.cpp b/src/task.cpp
+index 7567b69..ff40ec3 100644
+--- a/src/task.cpp
++++ b/src/task.cpp
+@@ -25,6 +25,9 @@
+ // Local
+ #include "grstapse/geometric_planning/motion_planning_query_result_base.hpp"
+ #include "grstapse/robot.hpp"
++#include <algorithm>
++#include <cmath>
++#include <stdexcept>
+ #include "grstapse/task_planning/sas/sas_action.hpp"
+ 
+ namespace grstapse
+@@ -68,11 +71,32 @@ namespace grstapse
+         return widest_robot->motionPlanningQuery(m_initial_configuration, m_terminal_configuration);
+     }
+ 
++    void Task::setServiceDurations(const std::map<std::string,float>& durations)
++    {
++        for (const auto& [robot, duration] : durations)
++            if (robot.empty() || !std::isfinite(duration) || duration < 0)
++                throw std::invalid_argument("Invalid robot-specific service duration");
++        m_service_durations = durations;
++    }
++
++    float Task::serviceDuration(const std::vector<std::shared_ptr<const Robot>>& coalition) const
++    {
++        if (m_service_durations.empty()) return m_symbolic_action->duration();
++        if (coalition.empty()) {
++            float lower = std::numeric_limits<float>::infinity();
++            for (const auto& entry : m_service_durations) lower = std::min(lower, entry.second);
++            return lower;
++        }
++        if (coalition.size() != 1)
++            throw std::invalid_argument("Robot-specific service times require singleton tasks");
++        return m_service_durations.at(coalition.front()->name());
++    }
++
+     float Task::computeDuration(const std::vector<std::shared_ptr<const Robot>>& coalition) const
+     {
+         if(coalition.empty())
+         {
+-            return m_symbolic_action->duration();
++            return serviceDuration(coalition);
+         }
+ 
+         // Get the route for the widest robot
+@@ -90,6 +114,6 @@ namespace grstapse
+         {
+             slowest_speed = std::max(slowest_speed, robot->speed());
+         }
+-        return motion_planning_result->length() / slowest_speed + m_symbolic_action->duration();
++        return motion_planning_result->length() / slowest_speed + serviceDuration(coalition);
+     }
+ }  // namespace grstapse
+\ No newline at end of file
+diff --git a/src/task_allocation/itags/itags_problem_inputs.cpp b/src/task_allocation/itags/itags_problem_inputs.cpp
+index 6bbccd5..52a99e2 100644
+--- a/src/task_allocation/itags/itags_problem_inputs.cpp
++++ b/src/task_allocation/itags/itags_problem_inputs.cpp
+@@ -31,9 +31,8 @@
+ #include "grstapse/geometric_planning/ompl/ompl_environment.hpp"
+ #include "grstapse/geometric_planning/ompl/ompl_motion_planner.hpp"
+ #include "grstapse/grstaps_problem_inputs.hpp"
+-#include "grstapse/scheduling/milp/deterministic/deterministic_milp_scheduler.hpp"
++#include "cpsat_scheduler.hpp"
+ #include "grstapse/scheduling/milp/deterministic/deterministic_schedule.hpp"
+-#include "grstapse/scheduling/milp/milp_scheduler_parameters.hpp"
+ #include "grstapse/scheduling/scheduler_problem_inputs.hpp"
+ #include "grstapse/species.hpp"
+ #include "grstapse/task.hpp"
+@@ -145,10 +144,11 @@ namespace grstapse
+                 ConfigurationBase::deserializeFromJson(terminal_configuration_j);
+             grstaps_problem_inputs->checkConfiguration(terminal_configuration);
+ 
+-            tasks.push_back(std::make_shared<const Task>(std::make_shared<SasAction>(name, duration),
+-                                                         desired_traits,
+-                                                         initial_configuration,
+-                                                         terminal_configuration));
++            auto task = std::make_shared<Task>(std::make_shared<SasAction>(name, duration),
++                                               desired_traits, initial_configuration, terminal_configuration);
++            if (task_j.contains("service_durations_by_robot"))
++                task->setServiceDurations(task_j.at("service_durations_by_robot").get<std::map<std::string,float>>());
++            tasks.push_back(task);
+         }
+         return tasks;
+     }
+@@ -195,8 +195,6 @@ namespace grstapse
+             }
+             p.m_grstaps_problem_inputs = grstaps_problem_inputs;
+         }
+-        MilpSchedulerBase::initGurobi(std::dynamic_pointer_cast<const MilpSchedulerParameters>(
+-            p.m_grstaps_problem_inputs->schedulerParameters()));
+ 
+         // Load TP Stuff
+         j.at(constants::k_plan_task_indices).get_to(p.m_plan_task_indices);
+@@ -222,7 +220,7 @@ namespace grstapse
+                 new SchedulerProblemInputs(std::shared_ptr<ItagsProblemInputs>(&p, [](ItagsProblemInputs *) {}),
+                                            allocation,
+                                            {}));
+-            DeterministicMilpScheduler scheduler(scheduler_problem_inputs);
++            CpSatScheduler scheduler(scheduler_problem_inputs);
+             auto schedule = scheduler.solve();
+             if(!schedule)
+             {

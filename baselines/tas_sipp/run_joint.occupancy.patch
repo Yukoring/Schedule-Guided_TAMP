@@ -1,0 +1,19 @@
+108a109,112
+>             if a['kind']=='park':
+>                 G_=len(instance['locations']);dest=tuple(instance['robots'][a['goal']-G_]['start']) if a['goal']>=G_ else tuple(instance['locations'][a['goal']]['position'])
+>                 if pos!=dest: plans[r['name']].append([pos,dest])
+>                 pos=dest;continue
+168c172
+<     save(out/'provenance.json',dict(input=str(args.input),input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),prm_seed=args.prm_seed,cp_seed=args.cp_seed,affinity=sorted(os.sched_getaffinity(0)),workers=4,budget=args.budget,base_s=5,gap_limit=args.gap,cp_max_s=args.cp_max_s,mission=args.mission,stack_root=str(stack),source_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths},motion_policy='native SIPP retiming, fixed action order, one attempt',model_scope='service-waypoint transfers; no carrier-only relay'))
+---
+>     save(out/'provenance.json',dict(input=str(args.input),input_sha256=hashlib.sha256(Path(args.input).read_bytes()).hexdigest(),prm_seed=args.prm_seed,cp_seed=args.cp_seed,affinity=sorted(os.sched_getaffinity(0)),workers=4,budget=args.budget,base_s=5,gap_limit=args.gap,cp_max_s=args.cp_max_s,occupancy=args.occupancy,mission=args.mission,stack_root=str(stack),source_sha256={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths},motion_policy='native SIPP retiming, fixed action order, one attempt',model_scope='service-waypoint transfers; no carrier-only relay'))
+170c174
+<     schedule=(solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,gap_limit=args.gap,cp_max_s=args.cp_max_s) if args.gap is not None else solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,first_after_base=True))
+---
+>     schedule=(solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,gap_limit=args.gap,cp_max_s=args.cp_max_s,occupancy=args.occupancy) if args.gap is not None else solve(instance,seconds=5,workers=4,seed=args.cp_seed,wall_deadline=deadline,first_after_base=True,occupancy=args.occupancy))
+215a220
+>     p.add_argument('--occupancy',action='store_true',help='vertex occupancy + explicit parking in the joint model (no-park configuration)')
+232c237
+<     command=[sys.executable,str(Path(__file__).resolve()),'--worker','--input',str(args.input),'--output',str(args.output),'--stack-root',str(args.stack_root),'--mission',args.mission,'--budget',str(args.budget),'--prm-seed',str(args.prm_seed),'--cp-seed',str(args.cp_seed),'--cores',cores]+(['--gap',str(args.gap),'--cp-max-s',str(args.cp_max_s)] if args.gap is not None else [])
+---
+>     command=[sys.executable,str(Path(__file__).resolve()),'--worker','--input',str(args.input),'--output',str(args.output),'--stack-root',str(args.stack_root),'--mission',args.mission,'--budget',str(args.budget),'--prm-seed',str(args.prm_seed),'--cp-seed',str(args.cp_seed),'--cores',cores]+(['--gap',str(args.gap),'--cp-max-s',str(args.cp_max_s)] if args.gap is not None else [])+(['--occupancy'] if args.occupancy else [])
