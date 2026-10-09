@@ -31,7 +31,7 @@ $PY experiments/run_batch.py run --exp main --seeds 0 1 2 --slots A:0,1,2,3 B:6,
 $PY experiments/run_batch.py run --exp ablation                                         # Table 3: 80 inputs x {Ours, U, Diverse U, U+AD+PD, U+RT, No FB}
 $PY experiments/run_batch.py run --exp scalability                                      # Fig. 4 / Table 2: room maps + den312d + warehouse
 $PY experiments/run_batch.py run --exp tasfb                                            # supplementary: TAS+FB on all 180 inputs
-$PY experiments/run_batch.py run --exp hw                                               # hardware planning inputs (Table 4 plans)
+$PY experiments/run_batch.py run --exp hw                                               # planning on the hardware inputs (no results shipped)
 $PY experiments/paper_tables.py                                                          # the tables of the paper from results/paper/*.csv
 $PY experiments/paper_ci.py                                                              # Table 1 approximate 95 % CIs (instance-cluster bootstrap)
 $PY experiments/make_tables.py results/main results/ablation results/scalability        # tables of a new batch (per seed and pooled, runtime, paired)
@@ -54,12 +54,6 @@ scheduling CP-SAT of Ours and its ablations uses seed 0. CP-SAT: 4 workers, 5 s 
 refinement / gap 0.1 (ITAGS).
 Motion layer for every method: prioritized SIPP on the shared roadmap, no endpoint retreat, no hand-over wait-aside detour, a finished robot keeps
 occupying its last location; the same validator accepts or rejects every candidate. A run is successful when a validated plan exists within the budget.
-
-Hardware experiments (Section 5.4): four RoboMaster EP robots in a 2.9 x 2.9 m workspace without obstacles, NOKOV motion capture, 0.30 m/s travel
-speed, 0.25 m planning radius, four goal regions and 16 tasks per mission, virtual tool. The plans came from `--exp hw` (`inputs/hw`); the planner
-inputs are the physical layout divided by 0.30 m per unit. Execution used the planned trajectories as 0.03 s command sequences with a tracking
-controller on motion-capture feedback; the robot-side runner is not part of this repository.
-
 
 ## License and third-party components
 

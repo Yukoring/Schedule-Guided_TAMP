@@ -12,7 +12,7 @@ from the shipped CSVs by `experiments/paper_tables.py`.
 | Ablation | `ablation` | 80 structured | Ours, No FB, U, Diverse U, U+AD+PD, U+RT | 0 |
 | Scalability | `scalability` | rooms R2J8..R8J32 (20 each) + den312d, warehouse (10 each) | Ours, CBTAMP, TP, TP+SIPP, TAS+SIPP, ITAGS | 0 |
 | TAS+FB (feedback on the TAS+SIPP baseline) | `tasfb` | structured 80 + rooms 80 + maps 20 | TAS+FB | 0 |
-| Hardware planning (Tab. hardware) | `hw` | 10 HW inputs (2.9 m arena) | Ours, U, CBTAMP, TAS+SIPP | 0 |
+| Hardware planning (inputs only, no results shipped) | `hw` | 10 HW inputs (2.9 m arena) | Ours, U, CBTAMP, TAS+SIPP | 0 |
 
 Commands
 
@@ -25,7 +25,7 @@ $PY experiments/run_batch.py run  --exp scalability
 $PY experiments/run_batch.py run  --exp tasfb
 $PY experiments/run_batch.py run  --exp hw
 $PY experiments/run_batch.py single --method ours --input inputs/struct/MP_s6.yaml --cores 0,1,2,3   # one run
-$PY experiments/make_tables.py results/main results/ablation results/scalability results/tasfb results/hw
+$PY experiments/make_tables.py results/main results/ablation results/scalability results/tasfb
 ```
 
 Notes
@@ -34,5 +34,3 @@ Notes
 - Method code: Ours in `ours/ours_loop.py`; CBTAMP, TP, TP+SIPP in `baselines/{cbtamp,tp,tp_sipp}/`; shared pieces in `common/control_common.py`;
   the worker `common/run_worker.py` loads them through `common/methods.py`.
 - ITAGS needs `baselines/itags/package/build/itags_cpsat`: build it first with `baselines/itags/package/build.sh` (OR-tools C++ 9.14).
-- Hardware execution (RoboMaster EP, NOKOV motion capture): the plans of `--exp hw` were executed as 0.03 s command trajectories; export and
-  robot-side tooling are not part of this repository. Measured makespans are in the paper (Table 4).

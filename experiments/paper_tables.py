@@ -98,7 +98,6 @@ if __name__ == "__main__":
         ("main", "Table 1"),
         ("ablation", "Table 3"),
         ("scalability", "Table 2 / Fig. 4"),
-        ("hw", "Hardware"),
         ("tasfb", "TAS+FB (supplementary)"),
     ]:
         if (d / (name + ".csv")).exists():

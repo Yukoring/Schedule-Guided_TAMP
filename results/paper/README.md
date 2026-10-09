@@ -114,24 +114,6 @@ pooled paired (Ours vs X, same case+seed, both solved): n, mean Ours/X, S-T-L
 |MT|n=47 62.0/118.9 47-0-0|n=54 64.0/108.6 54-0-0|n=24 61.4/86.8 23-1-0|n=0|n=0|
 |ST|n=39 62.1/117.8 39-0-0|n=45 62.1/98.2 44-1-0|n=19 65.9/80.0 15-3-1|n=0|n=0|
 
-## Hardware (Table 4): planned, command and measured makespan (s), five inputs per mission
-
-|Mission|Method|Executed|Planned|Command|Execution|
-|---|---|---|---|---|---|
-|MP|Ours|5/5|45.49|46.72|46.75|
-|MP|U|5/5|62.01|63.26|63.30|
-|MP|CBTAMP|4/5|71.71|72.76|72.76|
-|MP|TAS+SIPP|3/5|25.98|26.94|26.94|
-|MT|Ours|5/5|74.25|76.75|76.76|
-|MT|U|pending|86.24|88.94|pending|
-|MT|CBTAMP|4/5|102.96|105.16|105.17|
-|MT|TAS+SIPP|0/5|--|--|--|
-
-MT U was re-planned with one random PRM seed per input (seed in hw.csv) and exported with the same exporter; its robot execution is
-pending. Execution - command 0.01 s
-mean (max 0.18 s) over the 31 executed sets of the earlier plans; execution - planned 1.73 s mean, all of it from the 0.03 s command
-grid quantisation. No safety stop and no contact in any execution (minimum measured centre distance 0.47 to 1.06 m).
-
 ## TAS+FB (supplementary, seed 0)
 
 |Family|TAS+SIPP (60 s, one shot)|TAS+FB round 1 (5 s cap)|TAS+FB final|Ours|
