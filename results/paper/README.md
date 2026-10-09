@@ -2,7 +2,12 @@
 
 Numbers reported in the paper (budget 100 s, 4 cores per run).
 
-CSV columns: `experiment, case, family, method, seed, success, makespan_s, runtime_s, end_reason`. `end_reason` is the stage at which a
+CSV columns: `experiment, case, family, method, seed, success, makespan_s, runtime_s, validation_end_s, end_reason`.
+`validation_end_s` is the time (from the start of the run) at which the returned plan finished validation; it is below 100 s for every
+successful run. `runtime_s` is defined per method as in the paper tables: for Ours and its ablations the run time capped at the 100 s budget (a process
+that ended after the budget, for example while an extra round was still running, counts as 100 s and keeps the plan validated earlier);
+for TAS+SIPP, TAS+FB and ITAGS the worker time from its start to the end of validation (capped at 100 s for ITAGS); for CBTAMP, TP and
+TP+SIPP the process wall time, so a failed run stopped by the budget can show slightly more than 100 s. `end_reason` is the stage at which a
 run ended: `VALID` (validated plan returned); for Ours and the POPF2 baselines `BUDGET_EXHAUSTED`, `SEARCH_EXHAUSTED` (no planner
 candidate left), `NO_REPAIRABLE_CONFLICT`, `NO_PATH` / `MOTION_REJECTED` (TP+SIPP: SIPP found no path / rejected the plan); for TAS+SIPP
 `NO_SCHEDULE` (CP-SAT found no schedule within its cap), `SCHEDULE_INVALID`, `SIPP_FAILED` (schedule found, SIPP produced no trajectories);
@@ -118,11 +123,13 @@ pooled paired (Ours vs X, same case+seed, both solved): n, mean Ours/X, S-T-L
 |MP|CBTAMP|4/5|71.71|72.76|72.76|
 |MP|TAS+SIPP|3/5|25.98|26.94|26.94|
 |MT|Ours|5/5|74.25|76.75|76.76|
-|MT|U|5/5|74.25|76.75|76.75|
+|MT|U|pending|86.24|88.94|pending|
 |MT|CBTAMP|4/5|102.96|105.16|105.17|
 |MT|TAS+SIPP|0/5|--|--|--|
 
-Execution - command 0.01 s mean (max 0.18 s) over the 31 executed sets; execution - planned 1.73 s mean, all of it from the 0.03 s command
+MT U was re-planned with one random PRM seed per input (seed in hw.csv) and exported with the same exporter; its robot execution is
+pending. Execution - command 0.01 s
+mean (max 0.18 s) over the 31 executed sets of the earlier plans; execution - planned 1.73 s mean, all of it from the 0.03 s command
 grid quantisation. No safety stop and no contact in any execution (minimum measured centre distance 0.47 to 1.06 m).
 
 ## TAS+FB (supplementary, seed 0)

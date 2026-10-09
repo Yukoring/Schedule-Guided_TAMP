@@ -26,8 +26,3 @@ target_link_libraries(itags_core PUBLIC ortools::ortools fmt::fmt spdlog::spdlog
   Eigen3::Eigen ompl yaml-cpp geos geos_c Threads::Threads)
 add_executable(itags_cpsat itags_cli.cpp)
 target_link_libraries(itags_cpsat PRIVATE itags_core)
-add_executable(cpsat_numeric numeric_cli.cpp cpsat_model.cpp)
-target_link_libraries(cpsat_numeric PRIVATE ortools::ortools)
-# point-graph shortest-path diagnostic (AAMAS_ITAGS_PointGraphFix_20261004); not used by the experiment worker
-add_executable(pointgraph_query pointgraph_query_cli.cpp)
-target_link_libraries(pointgraph_query PRIVATE itags_core)

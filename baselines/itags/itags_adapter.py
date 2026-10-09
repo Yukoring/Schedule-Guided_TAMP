@@ -492,8 +492,3 @@ def service_times(robot_path, timed_events):
         for t0, t1, task, job, pos in sv:
             out[(job, task)] = (t0, t1, r)
     return out
-
-
-def rotations(names, k):
-    n = len(names)
-    return [names[i:] + names[:i] for i in range(min(k, n))]

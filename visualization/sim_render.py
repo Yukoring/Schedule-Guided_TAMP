@@ -2,7 +2,7 @@
 """Renderer for the supplementary videos: goal regions as teal rounded squares, task
 chips (▲ ■ ● ◆) in precedence order with "›" between levels (outside the wall for the structured arena, under the goal on maps),
 hammer marker for the tool, robots as coloured discs with index, countdown ring + remaining seconds during a service, pause glyph
-during waits, "park" during a final move. Failed runs: replay stopped at the first violation, red marker + banner, then a hold.
+during waits, no label after the last task. Failed runs: replay stopped at the first violation, red marker + banner, then a hold.
 Playback: dt 0.05 s, 20 fps, speed-up k = ceil(T / 60 s) shown in the header. Usage: sim_render.py traj/<file>.json ... [--dpi 110]"""
 import json,sys,math,argparse
 from pathlib import Path
@@ -102,7 +102,6 @@ def render(f,dpi=110,speed=None):
     hx.add_patch(Rectangle((0,0.3),1,0.18,fc='#eeeeee',ec='#999999',lw=0.8));bar=Rectangle((0,0.3),0,0.18,fc='#333333',ec='none');hx.add_patch(bar)
     clock=hx.text(1.0,0.62,'',fontsize=9,ha='right',va='bottom',family='monospace');done_t=hx.text(0.0,0.0,'',fontsize=8.5,ha='left',va='bottom',color='#444444');banner=hx.text(1.0,0.0,'',fontsize=9,ha='right',va='bottom',color='red',weight='bold')
     services=[e for e in ev if e['kind']=='service'];ntask=sum(len(gd['tasks']) for gd in env['goals'].values())
-    last_ev={i:max([e['t1'] for e in ev if e['robot_index']==i],default=0.0) for i in range(R)};final_xy=XY[-1]
     writer=FFMpegWriter(fps=FPS,bitrate=2500,metadata={'title':title});out=OUT/f"{d['scene']}__{case}__{label.replace('+','').replace('/','')}.mp4"
     with writer.saving(fig,str(out),dpi):
         for k in range(0,len(XY),step):
@@ -128,8 +127,7 @@ def render(f,dpi=110,speed=None):
                     else:txt='pick up' if e['kind']=='pickup_tool' else 'put down';rings[i].set_visible(False)
                 else:
                     rings[i].set_visible(False)
-                    moving=outcome=='success' and t>last_ev[i] and (abs(xy[i,0]-final_xy[i,0])>0.01 or abs(xy[i,1]-final_xy[i,1])>0.01)
-                    txt='park' if moving else ''
+                    txt=''  # no label after the last task
                 evtext[i].set_text(txt);evtext[i].set_position((xy[i,0],xy[i,1]+r*1.6) if above else (xy[i,0],xy[i,1]-r*1.6));evtext[i].set_va('bottom' if above else 'top')
             if tool:
                 holder=None;pos=tool['initial_position'] or [0,0]
