@@ -17,7 +17,7 @@ method comes from and what we changed. The method names are the ones of the pape
 
 - Origin: POPF2, Coles, Coles, Fox and Long, "POPF2: A forward-chaining partial order planner", IPC 2011. The planning model (PDDL domain and
   problem encoding) is the one of the CBTAMP paper.
-- Code: the POPF2 binary (`common/code/planners/popf2`) and the PDDL generators of the CBTAMP authors' implementation (`common/code/task_planning`).
+- Code: the POPF2 binary (`common/code/planners/popf2`) and the PDDL generators of the CBTAMP implementation (`common/code/task_planning`).
 - Adaptation: temporal planning on the roadmap; when a collision is detected the roadmap is resampled and the planner is called again. No schedule
   guidance, no collision regions, no SIPP. Budget, cores and the planner call policy (two profile phases, early/late variants) follow the common protocol.
 
@@ -31,8 +31,8 @@ method comes from and what we changed. The method names are the ones of the pape
 ## CBTAMP
 
 - Origin: Lee and Long, "Conflict-Based Task and Motion Planning for Multi-Robot, Multi-Goal Problems", ICAR 2023.
-- Code: the authors' implementation. The roadmap, PDDL generators, collision checker (`common/code/motion/collision_vor.py`) and validator in
-  `common/code/` are that implementation and are shared by every method including Ours.
+- Code: the implementation of the CBTAMP paper. The roadmap, PDDL generators, collision checker (`common/code/motion/collision_vor.py`) and
+  validator in `common/code/` come from that implementation and are shared by every method including Ours.
 - Adaptation: the algorithm is unchanged: collision regions found in candidate trajectories are added to the temporal planning problem and the planner
   is called again until a plan passes validation or the budget ends. Only the protocol differs: 100 s budget, POPF2 backend, the two-phase planner
   profiles of the common protocol; the candidate adoption rules are the original ones. No SIPP.
@@ -56,9 +56,9 @@ method comes from and what we changed. The method names are the ones of the pape
 ## ITAGS
 
 - Origin: Neville, Messing, Ravichandar, Hutchinson and Chernova, "An Interleaved Approach to Trait-Based Task Allocation and Scheduling", IROS 2021.
-- Code: the authors' public D-ITAGS repository, https://github.com/gneville6/D-ITAGS (commit e779ca8b6c9877ca51a5ffa5b4550dcdb3e0cd38), GPL-3.
+- Code: the public D-ITAGS repository, https://github.com/gneville6/D-ITAGS (commit e779ca8b6c9877ca51a5ffa5b4550dcdb3e0cd38), GPL-3.
   The copy we used is `itags/package/upstream/` (licence in `itags/package/LICENSE.upstream`); our changes are `itags/package/compatibility.patch`
-  and `upstream_cpsat.patch` (both apply to that commit, see `itags/package/PROVENANCE.json`).
+  and `upstream_cpsat.patch` (both apply to that commit).
 - Adaptation:
   - Scheduler: the Gurobi MILP of the original is replaced by CP-SAT (OR-tools C++, `itags/package/cpsat_scheduler.cpp`, `cpsat_model.cpp`). The
     allocation search (Itags) is the original code.
@@ -67,7 +67,8 @@ method comes from and what we changed. The method names are the ones of the pape
   - Fix: the original point-graph motion query did not accumulate costs in the shared A*; it now runs a graph-specific Dijkstra and returns a duration
     of -1 on failure so that the scheduler reads a failed transition (`itags/package/compatibility.patch`). Normalisation constants follow the PRM.
   - Motion stage (our adapter, `itags/itags_adapter.py`): the first task-complete allocation and the per-robot orders are fixed; the shared
-    prioritized SIPP plans the robots in id order and then in rotated priority orders (at most 4); precedence is enforced on executed times by
-    release-time propagation. Every candidate goes through the shared collision checker and validator; the first valid plan is returned.
+    prioritized SIPP plans the robots once, in robot id order (one attempt, no priority rotation); the plan goes through the shared collision
+    checker and validator.
   - Scope: tool (hand-over) missions are not in the original model and are reported as N/A.
-  - Build: `itags/package/build.sh` (OR-tools C++ 9.14); the binary used is `itags/package/build_seed/itags_cpsat`.
+  - Stopping policy: CP-SAT per refinement capped at min(10 s, remaining budget), relative gap 0.1, 4 workers, seed = run seed; 100 s run budget.
+  - Build: `itags/package/build.sh` (OR-tools C++ 9.14, release 9.14.6206); the binary is `itags/package/build/itags_cpsat` and is not shipped.

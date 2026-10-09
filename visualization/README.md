@@ -13,4 +13,4 @@ Instances: MP_s6, SP_s3, MT_s0, ST_s1 (main table); R4J16_s2, R6J24_s7, R8J32_s8
 (ablation); edit `SCENES` in sim_extract.py for others. Success videos replay the validated trajectory. Failed runs replay the method's last
 candidate (TAS+SIPP and ITAGS: the schedule executed on the roadmap without SIPP) and stop one step before the first collision or precedence
 violation; runs without any plan are 3 s static cards. Visual grammar: teal goal regions, task chips ▲ ■ ● ◆ in precedence order, hammer = tool,
-countdown ring during a service, "park" during a final move. Requires ffmpeg and matplotlib. The videos of the paper are distributed separately.
+countdown ring during a service, "park" during a final move. Requires ffmpeg and matplotlib. The supplementary videos are distributed separately.

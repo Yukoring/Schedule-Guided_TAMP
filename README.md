@@ -9,15 +9,17 @@ common/variants/   overlays: diverse_u (ablation), hw (hardware planning inputs 
 ours/          Ours: the schedule-guided control layer (ours_loop.py)
 baselines/     cbtamp/, tp/, tp_sipp/ (temporal-planning baselines on the shared stack), tas_sipp/ (TAS+SIPP), tas_fb/ (TAS+FB), itags/ (ITAGS)
 inputs/        struct (80: MP, SP, MT, ST), scal (80 room-map instances, 2 to 8 robots), maps (20: den312d, warehouse), hw (10 hardware inputs)
-experiments/   run_batch.py (every experiment), make_tables.py (tables from results), EXPERIMENTS.md (paper table -> command)
+experiments/   run_batch.py (every experiment), paper_tables.py (tables from results/paper), make_tables.py (tables from new batches),
+               EXPERIMENTS.md (paper table -> command)
 visualization/ scripts for the supplementary videos (trajectory extraction, rendering)
 results/paper/ the measured results of the paper (per-run CSVs and the tables); new batches go to results/<exp>/
 ```
 
 ## Setup
 
-Linux x86_64, Python 3.12, `pip install -r requirements.txt`. The POPF2 binary is included in `common/code/planners`; the ITAGS
-binary `baselines/itags/package/build_seed/itags_cpsat` is included and can be rebuilt with `baselines/itags/package/build.sh` (OR-tools C++ 9.14).
+Linux x86_64, Python 3.12, `pip install -r requirements.txt`. The POPF2 binary is included in `common/code/planners`. The ITAGS
+binary is not included (a compiled binary carries machine-specific library paths): build it with `baselines/itags/package/build.sh`
+(OR-tools C++ 9.14, OMPL, GEOS, yaml-cpp, fmt, spdlog, Eigen; the binary is written to `baselines/itags/package/build/itags_cpsat`).
 
 ## Running the experiments
 
@@ -30,7 +32,9 @@ $PY experiments/run_batch.py run --exp ablation                                 
 $PY experiments/run_batch.py run --exp scalability                                      # Fig. 4 / Table 2: room maps + den312d + warehouse
 $PY experiments/run_batch.py run --exp tasfb                                            # supplementary: TAS+FB on all 180 inputs
 $PY experiments/run_batch.py run --exp hw                                               # hardware planning inputs (Table 4 plans)
-$PY experiments/make_tables.py results/main results/ablation results/scalability        # tables (per seed and pooled, runtime, paired)
+$PY experiments/paper_tables.py                                                          # the tables of the paper from results/paper/*.csv
+$PY experiments/paper_ci.py                                                              # Table 1 approximate 95 % CIs (instance-cluster bootstrap)
+$PY experiments/make_tables.py results/main results/ablation results/scalability        # tables of a new batch (per seed and pooled, runtime, paired)
 ```
 
 Methods: ours, u, diverse_u, u_ad_pd, u_rt, no_fb, cbtamp, tp, tp_sipp, tas_sipp, tas_fb, itags (names as in the paper). A batch is resumable (completed runs are skipped); a `STOP_REQUESTED` file in the results
@@ -45,7 +49,9 @@ POPF2 call.
 ## Protocol
 
 Budget 100 s per run from roadmap construction to the last validation, 4 dedicated cores per run, two runs in parallel on disjoint physical
-cores, PRM seed = CP-SAT seed = seed (0, 1, 2 for Table 1; 0 elsewhere). CP-SAT: 4 workers, 5 s per call (Ours), gap 5 % / 60 s cap (TAS+SIPP).
+cores, PRM seed = seed (0, 1, 2 for Table 1; 0 elsewhere); the run seed is also the CP-SAT seed of TAS+SIPP, TAS+FB and ITAGS, while the
+scheduling CP-SAT of Ours and its ablations uses seed 0. CP-SAT: 4 workers, 5 s per call (Ours), gap 5 % / 60 s cap (TAS+SIPP), 10 s per
+refinement / gap 0.1 (ITAGS).
 Motion layer for every method: prioritized SIPP on the shared roadmap, no endpoint retreat, no hand-over wait-aside detour, a finished robot keeps
 occupying its last location; the same validator accepts or rejects every candidate. A run is successful when a validated plan exists within the budget.
 

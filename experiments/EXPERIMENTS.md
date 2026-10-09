@@ -3,7 +3,8 @@
 All runs: 100 s budget per run (roadmap construction to validation), 4 dedicated cores, PRM seed = seed (the scheduling CP-SAT of Ours and its ablations uses seed 0; TAS and ITAGS use the run seed), final motion standard
 (endpoint retreat off, hand-over wait-aside off, parked robots keep their last location, prioritized SIPP, the same validator).
 `experiments/run_batch.py` plans a manifest, runs it on two 4-core slots (resumable, `STOP_REQUESTED` file stops after the current runs)
-and writes `results/<exp>/output/runs.csv`. Tables are produced by `experiments/make_tables.py`.
+and writes `results/<exp>/output/runs.csv`. Tables of a new batch are produced by `experiments/make_tables.py`; the tables of the paper
+from the shipped CSVs by `experiments/paper_tables.py`.
 
 | Paper table / figure | `--exp` | Inputs | Methods | Seeds |
 |---|---|---|---|---|
@@ -32,6 +33,6 @@ Notes
   `common/_build/<variant>` on first use (common + overlay files). The variant diffs are `common/variants/*/*.patch`.
 - Method code: Ours in `ours/ours_loop.py`; CBTAMP, TP, TP+SIPP in `baselines/{cbtamp,tp,tp_sipp}/`; shared pieces in `common/control_common.py`;
   the worker `common/run_worker.py` loads them through `common/methods.py`.
-- ITAGS needs `baselines/itags/package/build_seed/itags_cpsat` (included, built from `baselines/itags/package` with OR-tools C++ 9.14; `build.sh`).
+- ITAGS needs `baselines/itags/package/build/itags_cpsat`: build it first with `baselines/itags/package/build.sh` (OR-tools C++ 9.14).
 - Hardware execution (RoboMaster EP, NOKOV motion capture): the plans of `--exp hw` were executed as 0.03 s command trajectories; export and
   robot-side tooling are not part of this repository. Measured makespans are in the paper (Table 4).

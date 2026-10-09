@@ -1,6 +1,13 @@
 # Measured results
 
-Numbers reported in the paper (budget 100 s, 4 cores per run). Cell = success/n · mean makespan of successes (s); runtime cells = mean runtime (all runs) / first valid plan / final validated plan (successes), s; paired = Ours shorter-tied-longer on jointly solved rows. Per-run records: main.csv, ablation.csv, scalability.csv, tasfb.csv, hw.csv.
+Numbers reported in the paper (budget 100 s, 4 cores per run).
+
+CSV columns: `experiment, case, family, method, seed, success, makespan_s, runtime_s, end_reason`. `end_reason` is the stage at which a
+run ended: `VALID` (validated plan returned); for Ours and the POPF2 baselines `BUDGET_EXHAUSTED`, `SEARCH_EXHAUSTED` (no planner
+candidate left), `NO_REPAIRABLE_CONFLICT`, `NO_PATH` / `MOTION_REJECTED` (TP+SIPP: SIPP found no path / rejected the plan); for TAS+SIPP
+`NO_SCHEDULE` (CP-SAT found no schedule within its cap), `SCHEDULE_INVALID`, `SIPP_FAILED` (schedule found, SIPP produced no trajectories);
+for ITAGS `MOTION_FAILED`, `TIMEOUT`. For example, TAS+SIPP on the tool missions: MT 51 x SIPP_FAILED + 9 x NO_SCHEDULE, ST 60 x
+SIPP_FAILED (no run failed in validation or by timeout). Cell = success/n · mean makespan of successes (s); runtime cells = mean runtime (all runs) / first valid plan / final validated plan (successes), s; paired = Ours shorter-tied-longer on jointly solved rows. Per-run records: main.csv, ablation.csv, scalability.csv, tasfb.csv, hw.csv.
 
 ## Ablation (Table 3, seed 0)
 
@@ -58,7 +65,9 @@ ABLATION  cell = mean runtime(all) / first valid(success) / final validated(succ
 
 ## Main table (Table 1, seeds 0, 1, 2)
 
-new rows 840 /840
+Table 1 intervals are approximate 95 % confidence intervals: mean +- 1.96 x SE, where SE is the standard deviation of 100,000
+instance-cluster bootstrap means (20 instances drawn with replacement per family, the three seed runs of an instance kept together,
+makespan averaged over the successful runs of a sample). Computed by `experiments/paper_ci.py`.
 
 seed 0
 |Mission|Ours|CBTAMP|TP|TP+SIPP|TAS+SIPP|ITAGS|

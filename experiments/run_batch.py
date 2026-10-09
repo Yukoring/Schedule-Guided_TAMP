@@ -19,8 +19,8 @@ Methods (names as in the paper)
  tas_fb tas_sipp + collision-region feedback and rescheduling (CP-SAT cap 5 s escalating)
  itags ITAGS (C++ CP-SAT allocation search) + shared SIPP
 
-Protocol (all experiments): budget 100 s per run from roadmap construction to validation, 4 dedicated cores per run, PRM seed = CP-SAT seed =
-seed, final motion standard (endpoint retreat off, hand-over wait-aside off, parked robots occupy their last location). One slot = one
+Protocol (all experiments): budget 100 s per run from roadmap construction to validation, 4 dedicated cores per run, PRM seed = seed (the scheduling
+CP-SAT of Ours uses seed 0; TAS and ITAGS use the run seed), final motion standard (endpoint retreat off, hand-over wait-aside off, parked robots occupy their last location). One slot = one
 4-core worker; two slots run in parallel. Never put a second job on hyper-thread siblings of a running slot.
 Outputs: OUT/manifest.csv, OUT/runs/<run_id>/ (full run record), OUT/output/dispatch_log.jsonl, OUT/output/runs.csv (aggregate)."""
 import argparse, csv, json, os, sys, time, hashlib, subprocess, threading, platform, signal, shutil
@@ -199,7 +199,7 @@ def execute(job, cpus, slot, runs, py, budget):
             "--slot",
             slot,
             "--binary",
-            str(ITAGS / "package/build_seed/itags_cpsat"),
+            str(ITAGS / "package/build/itags_cpsat"),
         ]
         cwd = str(out)
     elif m in WORKER_METHODS:
